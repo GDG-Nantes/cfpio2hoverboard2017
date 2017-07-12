@@ -57,3 +57,7 @@ typings/
 # dotenv environment variables file
 .env
 
+# les extracts faits
+/images
+/exports
+config.json

@@ -1,0 +1,11 @@
+# Install
+
+`npm install`
+
+# Configure
+
+Copy and paste `config.json.model` to `config.json` and replace with your datas
+
+# run
+
+just run with `node main.js`
