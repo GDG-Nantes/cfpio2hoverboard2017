@@ -2,7 +2,8 @@ const fetch = require('node-fetch'),
 	csv = require("fast-csv"),
 	fs = require("fs"),
 	download = require('image-downloader')
-	config = require('./config.json');
+	config = require('./config.json'),
+	_ = require('lodash');
 
 const TOKEN = config.token;
 const INSTANCE =config.instance;
@@ -59,11 +60,11 @@ fetch(URL_FORMATS, options)
 		tracksMap[track.id] = track;
 	});
 
-	// extractValidateSpeakers();
+	extractValidateSpeakers();
 	//extractBackupSpeakers();
 	//extractRejects();
 
-	extractJsons();
+	//extractJsons();
 
 })
 
@@ -299,13 +300,20 @@ function extractValidateSpeakers(){
 			speakers.forEach((speaker)=>{
 				if (session.speakers.indexOf(`${speaker.firstname} ${speaker.lastname}`) != -1){
 					speakersForSession.push(speaker);
+					const daySession = new Date(session.event_start);
+					const eventStartString = daySession.toISOString().substring(11,16);
 					finalArray.push({
-						firstname: speaker.firstname,
-						lastname: speaker.lastname,
+						firstname: _.capitalize(speaker.firstname),
+						lastname: _.capitalize(speaker.lastname),
 						name: `${speaker.firstname} ${speaker.lastname}`,
 						email : speaker.email,
+						session : session.name,
+						phone: "tel:"+speaker.phone,
+						company: speaker.company,
 						format : session.format,
-						session : session.name
+						day: daySession.toLocaleDateString('en-US', {month:'long', day:"2-digit"}),
+						hour: eventStartString,
+						room :  session.venue
 					})
 				}
 			});
@@ -347,7 +355,7 @@ function extractRejects(){
 	.then((sessions) => {
 
 		const promiseArray = [];
-		const sessionsReject = sessions.filter((session => session.state === 'REFUSED'));
+		const sessionsReject = sessions.filter((session => session.state != 'ACCEPTED' && session.state != 'BACKUP' && session.state != 'REFUSED'));
 		sessionsReject.forEach((session) =>{
 			promiseArray.push(new Promise((resolve)=>{
 				fetch(`${URL_SESSIONS}/${session.id}`,{
@@ -610,8 +618,14 @@ function writeValidateSpeakers(validateSPeakers){
 			speakerLastname: validateSpeaker.lastname,
 			speakerName: validateSpeaker.name,
 			sessionName: validateSpeaker.session,
+			email: validateSpeaker.email,
+			company: validateSpeaker.company,
 			format: validateSpeaker.format,
-			email: validateSpeaker.email
+			phone: validateSpeaker.phone,
+			format : validateSpeaker.format,
+			day : validateSpeaker.day,
+			hour: validateSpeaker.hour,
+			room :  validateSpeaker.room
 		});
 	});
 	csvStream.end();
